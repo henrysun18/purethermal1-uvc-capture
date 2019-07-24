@@ -15,7 +15,7 @@ install_thermal_dependencies(){
     sudo apt-get install -y python3-pyqt5
     sudo apt-get install -y python3-h5py
     sudo apt-get install -y python3-psutil
-    sudo pip3 install opencv-contrib-python
+    sudo apt-get install -y python3-opencv
     sudo pip3 install --no-cache-dir tifffile
     sudo apt-get install -y python3-matplotlib
     sudo apt-get install -y libatlas-base-dev
@@ -29,7 +29,6 @@ install_thermal_app(){
 
     echo "Installing and building thermal app."
     sudo apt install git -y
-    git clone https://github.com/Kheirlb/purethermal1-uvc-capture.git
     git clone https://github.com/groupgets/libuvc
     sudo apt-get install cmake -y
     sudo apt-get install libusb-1.0-0-dev -y
