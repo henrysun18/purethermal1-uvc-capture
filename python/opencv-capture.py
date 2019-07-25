@@ -10,6 +10,7 @@ except ImportError:
     print "ERROR python-opencv must be installed"
     exit(1)
 
+name = "GordonBot Thermal Video Feed"
 class OpenCvCapture(object):
     """
     Encapsulate state for capture from Pure Thermal 1 with OpenCV
@@ -18,11 +19,7 @@ class OpenCvCapture(object):
     def __init__(self):
         # capture from the LAST camera in the system
         # presumably, if the system has a built-in webcam it will be the first
-        for i in reversed(range(10)):
-            print "Testing for presense of camera #{0}...".format(i)
-            cv2_cap = cv2.VideoCapture(i)
-            if cv2_cap.isOpened():
-                break
+        cv2_cap = cv2.VideoCapture(0)
 
         if not cv2_cap.isOpened():
             print "Camera not found!"
@@ -35,7 +32,7 @@ class OpenCvCapture(object):
         Run loop for cv2 capture from lepton
         """
 
-        cv2.namedWindow("lepton", cv2.WINDOW_NORMAL)
+        cv2.namedWindow(name, cv2.WINDOW_NORMAL)
         print "Running, ESC or Ctrl-c to exit..."
         while True:
             ret, img = self.cv2_cap.read()
@@ -44,7 +41,7 @@ class OpenCvCapture(object):
                 print "Error reading image"
                 break
 
-            cv2.imshow("lepton", cv2.resize(img, (640, 480)))
+            cv2.imshow(name, cv2.resize(img, (640, 480)))
             if cv2.waitKey(5) == 27:
                 break
 
