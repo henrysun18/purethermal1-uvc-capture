@@ -11,6 +11,25 @@ except ImportError:
   from Queue import Queue
 import platform
 
+from flask import Flask, render_template, Response
+
+app = Flask(__name__)
+
+
+
+##stream to web server??
+@app.route('/')
+def index():
+    return render_template('index.html')
+@app.route('/video_feed')
+def video_feed():
+    pass
+def get_frame(img):
+    ret, jpeg = cv2.imencode('.jpg', img)
+    return jpeg.tobytes()
+
+
+
 BUF_SIZE = 2
 q = Queue(BUF_SIZE)
 
@@ -79,6 +98,8 @@ def display_temperature(img, val_k, loc, color):
   cv2.line(img, (x - 2, y), (x + 2, y), color, 1)
   cv2.line(img, (x, y - 2), (x, y + 2), color, 1)
 
+
+
 def main():
   grayscale_to_colour_numpy_lut = init_colour_map()
   ctx = POINTER(uvc_context)()
@@ -132,7 +153,7 @@ def main():
           img = cv2.LUT(img, grayscale_to_colour_numpy_lut) # initial code doesnt output colour -_-
           display_temperature(img, minVal, minLoc, (255, 0, 0))
           display_temperature(img, maxVal, maxLoc, (0, 0, 255))
-          cv2.imshow('Lepton Radiometry', img)
+          cv2.imshow('GordonBot Thermal Video Feed with Radiometry', img)
           cv2.waitKey(1)
 
         cv2.destroyAllWindows()
