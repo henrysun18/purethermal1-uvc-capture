@@ -50,6 +50,7 @@ class OpenCvCapture(object):
         print("Running, ESC or Ctrl-c to exit...")
         while True:
             ret, img = self.cv2_cap.read()
+#            minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(img)
             frame = self.get_frame(img)
             yield (b'--frame\r\n'
                     b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
@@ -57,4 +58,4 @@ class OpenCvCapture(object):
         cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9000, debug=True, threaded=True)
+    app.run(host='192.168.43.76', port=9000, debug=True, threaded=True)
