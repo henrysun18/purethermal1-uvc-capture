@@ -12,10 +12,12 @@ except ImportError:
 import platform
 
 from flask import Flask, render_template, Response
+import threading
 
 app = Flask(__name__)
 
 
+global_frame = " " #to allow multiple users to view the stream, return Response(cached data) instead of Response(get_data())
 
 ##stream to web server??
 @app.route('/')
@@ -24,10 +26,19 @@ def index():
 @app.route('/video_feed')
 def video_feed():
     """put this in the src attribute of an img tag in html"""
-    return Response(capture(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(capture_cached_frame(), mimetype='multipart/x-mixed-replace; boundary=frame')
 def get_frame(img):
     ret, jpeg = cv2.imencode('.jpg', img)
     return jpeg.tobytes()
+def capture_cached_frame():
+    print("working")
+    while True:
+        time.sleep(0.5)
+        global global_frame
+        print("yielding")
+        yield(b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + global_frame + b'\r\n')
+    print("done working")
 
 
 
@@ -100,6 +111,10 @@ def display_temperature(img, val_k, loc, color):
   cv2.line(img, (x, y - 2), (x, y + 2), color, 1)
 
 
+@app.before_first_request
+def capture_in_background():
+    thread = threading.Thread(target=capture)
+    thread.start()
 
 def capture():
   grayscale_to_colour_numpy_lut = init_colour_map()
@@ -157,9 +172,9 @@ def capture():
           #cv2.imshow('GordonBot Thermal Video Feed with Radiometry', img)
 
             #thermal video stream magic
-          frame = get_frame(img)
-          yield(b'--frame\r\n'
-                  b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+          global global_frame
+          global_frame = get_frame(img)
+          print("global frame updated")
 
           cv2.waitKey(1)
 

@@ -58,4 +58,4 @@ class OpenCvCapture(object):
         cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    app.run(host='192.168.43.76', port=9000, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=9000, debug=True, threaded=True)
