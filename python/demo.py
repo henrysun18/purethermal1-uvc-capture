@@ -13,11 +13,15 @@ import platform
 
 from flask import Flask, render_template, Response
 import threading
+import RPi.GPIO as GPIO
+from buzzer_test import Buzzer
+from time import sleep
 
 app = Flask(__name__)
 
 
-global_frame = " " #to allow multiple users to view the stream, return Response(cached data) instead of Response(get_data())
+global_frame = b'\r\n' #to allow multiple users to view the stream, return Response(cached data) instead of Response(get_data())
+global_max_temp = 0 #will be checked against by the buzzer code
 
 ##stream to web server??
 @app.route('/')
@@ -110,10 +114,38 @@ def display_temperature(img, val_k, loc, color):
   cv2.line(img, (x - 2, y), (x + 2, y), color, 1)
   cv2.line(img, (x, y - 2), (x, y + 2), color, 1)
 
-
+# start a thread that continually updates the global/latest video frame, cache to support multiple connected clients
 @app.before_first_request
 def capture_in_background():
     thread = threading.Thread(target=capture)
+    thread.start()
+# start a thread that checks the latest max temperature against a threshold and activates buzzer if necessary (also checks pir)
+@app.before_first_request
+def prepare_warning_in_background():
+    def prepare_warning():
+        buzzer = Buzzer(7)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(7, GPIO.OUT) #buzzer
+        GPIO.setup(11, GPIO.IN) #pir sensor
+        GPIO.add_event_detect(11, GPIO.RISING, callback=buzzer.stop)
+
+        last_alarm_end_time = 0
+        global global_max_temp
+        while True:
+            threshold = 55
+            cooldown_duration = 10 #wait at least 10s before sending another alarm after cancelling one
+            
+            print("checking if max temp is greater than ", threshold, " degC")
+            if ktoc(global_max_temp) > threshold:
+                seconds_since_last_alarm_ended = int(time.time() - last_alarm_end_time)
+                if seconds_since_last_alarm_ended > cooldown_duration:
+                    print("max temp of ", ktoc(global_max_temp), " is risk of fire!!!")
+                    buzzer.play(30)
+                    #by now, either the buzzer playtime (which could be configured to go on forever) ended or it got cancelled by motion
+                    last_alarm_end_time = time.time()
+            sleep(0.5)
+
+    thread = threading.Thread(target=prepare_warning)
     thread.start()
 
 def capture():
@@ -174,6 +206,8 @@ def capture():
             #thermal video stream magic
           global global_frame
           global_frame = get_frame(img)
+          global global_max_temp
+          global_max_temp = maxVal
           print("global frame updated")
 
           cv2.waitKey(1)
